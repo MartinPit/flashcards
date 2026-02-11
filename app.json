@@ -3,13 +3,14 @@
     "name": "flashcards",
     "slug": "flashcards",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "flashcards",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "requireFullScreen": false,
       "bundleIdentifier": "com.xpitona1.flashcards"
     },
     "android": {
@@ -21,6 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan",
       "package": "com.xpitona1.flashcards"
     },
     "web": {
@@ -40,7 +42,17 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.1.20"
+          }
+        }
+      ],
+      "expo-secure-store",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -36,7 +36,8 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-app-example
+.idea
+.env
 
 # generated native folders
 /ios
