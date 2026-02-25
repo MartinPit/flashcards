@@ -1,7 +1,6 @@
 import { type ReactNode, useState, useEffect } from 'react';
 import { AuthUser, AuthSession } from '@supabase/supabase-js';
 import { AuthContext } from '@/hooks/use-auth-context';
-import { Text } from 'react-native';
 import { useSystem } from '@/lib/powersync/system';
 import { SyncClientImplementation } from '@powersync/react-native';
 
@@ -13,21 +12,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { powerSync, supabase } = useSystem();
 
   useEffect(() => {
-  const { data: { subscription } } = supabase.client.auth.onAuthStateChange((event, session) => {
-    setSession(session);
-    setUser(session?.user ?? null);
-    setIsLoading(false);
+    const { data: { subscription } } = supabase.client.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
 
-    if (event === 'SIGNED_IN') {
-      powerSync
-        .connect(supabase, { clientImplementation: SyncClientImplementation.RUST })
-        .then(() => console.log('connected'))
-        .catch(console.error);
-    }
-  });
+      if (event === 'SIGNED_IN') {
+        powerSync
+          .connect(supabase, { clientImplementation: SyncClientImplementation.RUST })
+          .then(() => console.log('connected'))
+          .catch(console.error);
+      }
+    });
 
-  return () => subscription.unsubscribe();
-}, []);
+    return () => subscription.unsubscribe();
+  }, [supabase, powerSync]);
 
   async function signIn({ session, user }: { session: AuthSession | null; user: AuthUser | null }) {
     console.log('signIn');
@@ -47,29 +46,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  async function getSession() {
-    const { data } = await supabase.client.auth.getSession();
-
-    if (data.session) {
-      setSession(data.session);
-      setUser(data.session.user);
-    }
-
-    setIsLoading(false);
-  }
 
   useEffect(
     () => {
+      async function getSession() {
+        const { data } = await supabase.client.auth.getSession();
+
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+
+        setIsLoading(false);
+      }
       if (!session) getSession();
     },
-    [session]
+    [session, supabase.client.auth]
   );
-
-  if (isLoading) {
-    return (
-        <Text>Loading...</Text>
-    );
-  }
 
   return (
     <AuthContext.Provider
@@ -77,6 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         user,
         signIn,
+        isLoading,
         signOut,
         isSyncEnabled,
         setIsSyncEnabled

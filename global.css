@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@layer theme {
+  :root {
+
+    --color-shadow: rgb(0, 0, 0);
+    --color-backdrop: rgba(51, 47, 55, 0.4);
+
+
+    /* Dark theme variables */
+    @variant dark {
+      --color-primary: rgb(250, 177, 218);
+      --color-on-primary: rgb(80, 30, 63);
+      --color-primary-container: rgb(107, 52, 86);
+      --color-on-primary-container: rgb(255, 216, 235);
+
+      --color-secondary: rgb(255, 180, 163);
+      --color-on-secondary: rgb(86, 31, 18);
+      --color-secondary-container: rgb(115, 52, 38);
+      --color-on-secondary-container: rgb(255, 218, 210);
+
+      --color-tertiary: rgb(255, 182, 143);
+      --color-on-tertiary: rgb(83, 34, 1);
+      --color-tertiary-container: rgb(112, 55, 20);
+      --color-on-tertiary-container: rgb(255, 219, 202);
+
+      --color-error: rgb(255, 180, 171);
+      --on-error: rgb(105, 0, 5);
+      --error-container: rgb(147, 0, 10);
+      --on-error-container: rgb(255, 218, 214);
+
+      --color-background: rgb(24, 17, 21);
+      --color-on-background: rgb(237, 223, 228);
+      --color-surface: rgb(24, 17, 21);
+      --color-on-surface: rgb(237, 223, 228);
+
+      --color-surface-variant: rgb(79, 67, 73);
+      --color-on-surface-variant: rgb(211, 194, 201);
+      --color-outline: rgb(156, 141, 147);
+
+      --color-surface-disabled: rgba(237, 223, 228, 0.12);
+      --color-on-surface-disabled: rgba(237, 223, 228, 0.38);
+      --color-inverse-surface: rgb(237, 223, 228);
+      --color-inverse-on-surface: rgb(54, 46, 50);
+      --color-inverse-primary: rgb(134, 75, 111);
+
+      --color-elevation-0: transparent;
+      --color-elevation-1: rgb(19 12 16);
+      --color-elevation-2: rgb(33 26 29);
+      --color-elevation-3: rgb(37 30 33);
+      --color-elevation-4: rgb(48 40 44);
+      --color-elevation-5: rgb(59 50 54);
+    }
+
+    @variant light {
+      --color-primary: rgb(134, 75, 111);
+      --color-on-primary: rgb(255, 255, 255);
+      --color-primary-container: rgb(255, 216, 235);
+      --color-on-primary-container: rgb(107, 52, 86);
+
+      --color-secondary: rgb(144, 75, 59);
+      --color-on-secondary: rgb(255, 255, 255);
+      --color-secondary-container: rgb(255, 218, 210);
+      --color-on-secondary-container: rgb(115, 52, 38);
+
+      --color-tertiary: rgb(140, 78, 41);
+      --color-on-tertiary: rgb(255, 255, 255);
+      --color-tertiary-container: rgb(255, 219, 202);
+      --color-on-tertiary-container: rgb(112, 55, 20);
+
+      --color-error: rgb(186 26 26);
+      --on-error: rgb(255 255 255);
+      --error-container: rgb(255 218 214);
+      --on-error-container: rgb(147 0 10);
+
+      --color-background: rgb(255, 248, 248);
+      --color-on-background: rgb(33, 26, 29);
+      --color-surface: rgb(255, 248, 248);
+      --color-on-surface: rgb(33, 26, 29);
+
+      --color-surface-variant: rgb(240, 222, 229);
+      --color-on-surface-variant: rgb(79, 67, 73);
+      --color-outline: rgb(129, 115, 122);
+
+      --color-surface-disabled: rgba(33, 26, 29, 0.12);
+      --color-on-surface-disabled: rgba(33, 26, 29, 0.38);
+      --color-inverse-surface: rgb(54, 46, 50);
+      --color-inverse-on-surface: rgb(252, 237, 242);
+      --color-inverse-primary: rgb(250, 177, 218);
+
+      --color-elevation-0: transparent;
+      --color-elevation-1: rgb(255, 255, 255);
+      --color-elevation-2: rgb(255, 240, 245);
+      --color-elevation-3: rgb(249, 234, 239);
+      --color-elevation-4: rgb(243, 228, 233);
+      --color-elevation-5: rgb(237, 223, 228);
+    }
+  }
+}

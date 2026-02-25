@@ -1,4 +1,4 @@
-import { AuthSession, AuthUser, Session } from '@supabase/supabase-js'
+import { AuthSession, AuthUser } from '@supabase/supabase-js'
 import { createContext, useContext } from 'react'
 
 export type AuthState = {
@@ -6,6 +6,7 @@ export type AuthState = {
   user: AuthUser | null;
   signIn: ({ session, user }: { session: AuthSession | null; user: AuthUser | null }) => void;
   signOut: () => void;
+  isLoading: boolean;
   isSyncEnabled: boolean;
   setIsSyncEnabled: (isSyncEnabled: boolean) => void;
 };
@@ -15,6 +16,7 @@ export const AuthContext = createContext<AuthState>({
   user: null,
   signIn: () => {},
   signOut: () => {},
+  isLoading: true,
   isSyncEnabled: true,
   setIsSyncEnabled: () => {}
 });
