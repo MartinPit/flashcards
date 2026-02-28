@@ -6,11 +6,11 @@ export const AppSchema = new Schema({
     name: column.text,
     parent_id: column.text,
     created_at: column.text,
+    is_card_set: column.integer,
   }),
   columns: new Table({
     user_id: column.text,
     label: column.text,
-    order_index: column.integer,
   }),
   user_settings: new Table({
     user_id: column.text,
