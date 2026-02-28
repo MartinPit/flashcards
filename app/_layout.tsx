@@ -7,7 +7,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { PowerSyncContext, SyncClientImplementation } from "@powersync/react-native";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { AppRegistry } from "react-native";
+import { AppRegistry, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { expo } from "../app.json";

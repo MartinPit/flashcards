@@ -81,7 +81,7 @@ export default function TabLayout() {
           title: 'Categories',
           tabBarIcon: (props) => (
             <MaterialCommunityIcons
-              name={props.focused ? "label" : "label-outline"}
+              name={props.focused ? "label-multiple" : "label-multiple-outline"}
               {...props}
             />
           ),

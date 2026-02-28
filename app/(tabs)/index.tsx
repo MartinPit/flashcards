@@ -1,6 +1,7 @@
-import { View, StyleSheet } from 'react-native';
-import { Button, Text } from 'react-native-paper';
-import {Uniwind} from "uniwind";
+import CreateActionsButton from '@/components/ui/create-actions-button';
+import { View, Text, StyleSheet } from 'react-native';
+import { Button } from 'react-native-paper';
+import { Uniwind } from "uniwind";
 
 export default function Tab() {
 
@@ -18,6 +19,7 @@ export default function Tab() {
       <Button onPress={() => toggleTheme()} mode='elevated'>
         <Text>Click me</Text>
       </Button>
+      <CreateActionsButton />
 
     </View>
   );

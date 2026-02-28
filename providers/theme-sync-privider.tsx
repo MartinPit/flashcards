@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { MD3LightTheme, MD3DarkTheme, PaperProvider, adaptNavigationTheme } from 'react-native-paper';
-import { DarkTheme, DefaultTheme, NavigationContainer, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useCSSVariable, useUniwind } from 'uniwind';
 
 const { LightTheme: AdaptedNavLight, DarkTheme: AdaptedNavDark } = adaptNavigationTheme({
@@ -68,6 +68,7 @@ export const ThemeSyncProvider = ({ children }: { children: React.ReactNode }) =
     return {
       ...paperBase,
       ...navBase,
+      version: 3,
       dark: isDark,
       colors: {
         ...paperBase.colors,
