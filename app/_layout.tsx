@@ -12,6 +12,21 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { expo } from "../app.json";
 import { ThemeSyncProvider } from '@/providers/theme-sync-privider';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://a33be7aa09e4542226c5b1e3df70ecc4@o4510962973147136.ingest.de.sentry.io/4510962975834192',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 function RootNavigator() {
   const { session, isSyncEnabled } = useAuth()
@@ -43,7 +58,7 @@ function RootNavigator() {
   )
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const { powerSync } = useSystem();
 
   return (
@@ -61,6 +76,6 @@ export default function RootLayout() {
       </GestureHandlerRootView>
     </ThemeSyncProvider>
   );
-}
+});
 
 AppRegistry.registerComponent(expo.name, () => RootLayout);
