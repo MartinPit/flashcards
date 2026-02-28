@@ -7,7 +7,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { PowerSyncContext, SyncClientImplementation } from "@powersync/react-native";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { AppRegistry, Platform } from "react-native";
+import { AppRegistry } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { expo } from "../app.json";
@@ -15,7 +15,7 @@ import { ThemeSyncProvider } from '@/providers/theme-sync-privider';
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
-  dsn: 'https://a33be7aa09e4542226c5b1e3df70ecc4@o4510962973147136.ingest.de.sentry.io/4510962975834192',
+  dsn: process.env.EXPO_PUBLIC_SENTRY_URL,
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
@@ -78,4 +78,4 @@ export default Sentry.wrap(function RootLayout() {
   );
 });
 
-AppRegistry.registerComponent(expo.name, () => RootLayout);
+AppRegistry.registerComponent(expo.name, () => RootNavigator);
