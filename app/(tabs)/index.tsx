@@ -18,6 +18,7 @@ export default function Tab() {
   const onPressPowerSync = async () => {
     const status = await powerSync.getUploadQueueStats();
     console.log('Pending uploads:', status.count);
+    console.log('Last sync time:', powerSync.currentStatus);
   };
 
   return (

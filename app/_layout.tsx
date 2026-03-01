@@ -2,11 +2,11 @@ import '../global.css';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SplashScreenController } from "@/components/splash-screen-controller";
 import { useAuth } from "@/hooks/use-auth-context";
-import { useSystem } from "@/lib/powersync/system";
+import { useSystem, system } from "@/lib/powersync/system";
 import { AuthProvider } from "@/providers/auth-provider";
-import { PowerSyncContext, SyncClientImplementation } from "@powersync/react-native";
+import { PowerSyncContext } from "@powersync/react-native";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeSyncProvider } from '@/providers/theme-sync-privider';
@@ -28,21 +28,20 @@ Sentry.init({
 
 function RootNavigator() {
   const { session, isSyncEnabled } = useAuth()
-  const { powerSync, supabase } = useSystem();
+  const { powerSync, supabase, connect } = useSystem();
 
   useEffect(() => {
     if (isSyncEnabled) {
-      powerSync
-        .connect(supabase, { clientImplementation: SyncClientImplementation.RUST })
-        .then(() => console.log('connected'))
-        .catch(console.error);
+      if (!powerSync.connected) {
+        connect();
+      }
     } else {
       powerSync
         .disconnect()
         .then(() => console.log('not connected'))
         .catch(console.error);
     }
-  }, [isSyncEnabled, powerSync, supabase]);
+  }, [isSyncEnabled, powerSync, supabase, connect]);
 
   return (
     <Stack>
@@ -57,13 +56,25 @@ function RootNavigator() {
 }
 
 export default Sentry.wrap(function RootLayout() {
-  const { powerSync } = useSystem();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    system.init()
+      .then(() => setIsReady(true))
+      .catch((err) => {
+        console.error("Failed to initialize system:", err);
+      });
+  }, []);
+
+  if (!isReady) {
+    return <SplashScreenController />;
+  }
 
   return (
     <ThemeSyncProvider>
       <GestureHandlerRootView>
         <SafeAreaProvider>
-          <PowerSyncContext.Provider value={powerSync}>
+          <PowerSyncContext.Provider value={system.powerSync}>
             <AuthProvider>
               <SplashScreenController />
               <RootNavigator />
