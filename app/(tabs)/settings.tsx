@@ -1,12 +1,12 @@
+import SignOutButton from '@/components/auth/sign-out-button';
 import { StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Tab() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text className='text-foreground'>Settings</Text>
+      <SignOutButton />
     </SafeAreaView >
   );
 }

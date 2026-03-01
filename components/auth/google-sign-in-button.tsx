@@ -8,7 +8,6 @@ import { Image } from 'expo-image';
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
 
 WebBrowser.maybeCompleteAuthSession();
 

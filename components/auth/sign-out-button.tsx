@@ -1,7 +1,6 @@
 import { useAuth } from '@/hooks/use-auth-context';
 import { useSystem } from '@/lib/powersync/system'
-import React from 'react'
-import { Button } from 'react-native'
+import { Button } from 'react-native-paper';
 
 
 export default function SignOutButton() {
@@ -14,5 +13,11 @@ export default function SignOutButton() {
     signOut();
   }
 
-  return <Button title="Sign out" onPress={handleSignOut} />
+  return (
+    <Button
+      onPress={handleSignOut}
+    >
+      Sign Out
+    </Button >
+  );
 }

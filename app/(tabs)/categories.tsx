@@ -83,7 +83,7 @@ export default function ColumnManager() {
               autoFocus
               mode="flat"
               underlineStyle={{ height: 0, backgroundColor: 'transparent' }}
-              style={{ flex: 1, backgroundColor: 'transparent' }}
+              style={{ backgroundColor: 'transparent' }}
             />
           </StyledAnimatedView>
         ) : (
