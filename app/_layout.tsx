@@ -7,10 +7,8 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { PowerSyncContext, SyncClientImplementation } from "@powersync/react-native";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { AppRegistry } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { expo } from "../app.json";
 import { ThemeSyncProvider } from '@/providers/theme-sync-privider';
 import * as Sentry from '@sentry/react-native';
 
@@ -78,4 +76,4 @@ export default Sentry.wrap(function RootLayout() {
   );
 });
 
-AppRegistry.registerComponent(expo.name, () => RootNavigator);
+export { ErrorBoundary } from '@/components/error-boundary';
