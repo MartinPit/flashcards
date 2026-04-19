@@ -10,6 +10,8 @@ import Animated, {
   Easing
 } from "react-native-reanimated";
 import { AddCategoryDialog, AddCategoryDialogRef } from "../auth/modals/create-category-modal";
+import { AddFolderDialog, AddFolderDialogRef } from "../cards/modals/create-folder-modal";
+import { AddCardSetDialog, AddCardSetDialogRef } from "../cards/modals/create-card-set-modal";
 
 const CreateActionsButton = (props: Partial<FABGroupProps>) => {
   const router = useRouter();
@@ -18,6 +20,8 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
   const rotation = useSharedValue(0);
 
   const dialogRef = useRef<AddCategoryDialogRef>(null);
+  const folderDialogRef = useRef<AddFolderDialogRef>(null);
+  const cardSetDialogRef = useRef<AddCardSetDialogRef>(null);
 
   const onStateChange = ({ open }: { open: boolean }) => {
     setState({ open });
@@ -27,11 +31,11 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
     });
   };
 
-  const animatedIconStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ rotate: `${rotation.value * 135}deg` }],
-    };
-  });
+   const animatedIconStyle = useAnimatedStyle(() => {
+     return {
+       transform: [{ rotate: `${rotation.value * 135}deg` }],
+     };
+   });
 
   return (
     <>
@@ -48,7 +52,7 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
           )}
           open={state.open}
           visible={isFocused}
-          style={{ paddingBottom: 116, paddingRight: 8 }}
+          style={{ paddingBottom: 108, paddingRight: 12 }}
           fabStyle={{ transform: [{ scale: 1.2 }] }}
           actions={[
             {
@@ -60,13 +64,19 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
             {
               icon: 'card-bulleted-outline',
               label: 'Add Card Set',
-              onPress: () => router.push('/cards'),
+              onPress: () => cardSetDialogRef.current?.show(),
               size: 'medium'
             },
             {
               icon: 'folder-text-outline',
               label: 'Add Folder',
-              onPress: () => router.push('/cards'),
+              onPress: () => folderDialogRef.current?.show(),
+              size: 'medium'
+            },
+            {
+              icon: 'pencil-plus',
+              label: 'Create Card',
+              onPress: () => router.push('/cards/new'),
               size: 'medium'
             },
             {
@@ -84,6 +94,8 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
         />
       </Portal>
       <AddCategoryDialog ref={dialogRef} />
+      <AddFolderDialog ref={folderDialogRef} />
+      <AddCardSetDialog ref={cardSetDialogRef} />
     </>
   );
 }
