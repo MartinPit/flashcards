@@ -9,9 +9,8 @@ import Animated, {
   withTiming,
   Easing
 } from "react-native-reanimated";
-import { AddCategoryDialog, AddCategoryDialogRef } from "../auth/modals/create-category-modal";
-import { AddFolderDialog, AddFolderDialogRef } from "../cards/modals/create-folder-modal";
-import { AddCardSetDialog, AddCardSetDialogRef } from "../cards/modals/create-card-set-modal";
+import { AddCategoryDialog, AddCategoryDialogRef } from "../modals/create-category-modal";
+import { AddFolderDialog, AddFolderDialogRef } from "../modals/create-folder-modal";
 
 const CreateActionsButton = (props: Partial<FABGroupProps>) => {
   const router = useRouter();
@@ -21,7 +20,6 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
 
   const dialogRef = useRef<AddCategoryDialogRef>(null);
   const folderDialogRef = useRef<AddFolderDialogRef>(null);
-  const cardSetDialogRef = useRef<AddCardSetDialogRef>(null);
 
   const onStateChange = ({ open }: { open: boolean }) => {
     setState({ open });
@@ -64,7 +62,7 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
             {
               icon: 'card-bulleted-outline',
               label: 'Add Card Set',
-              onPress: () => cardSetDialogRef.current?.show(),
+              onPress: () => router.push('/(tabs)/card-sets/new'),
               size: 'medium'
             },
             {
@@ -76,7 +74,7 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
             {
               icon: 'pencil-plus',
               label: 'Create Card',
-              onPress: () => router.push('/cards/new'),
+              onPress: () => router.push('/(tabs)/cards/new'),
               size: 'medium'
             },
             {
@@ -95,7 +93,6 @@ const CreateActionsButton = (props: Partial<FABGroupProps>) => {
       </Portal>
       <AddCategoryDialog ref={dialogRef} />
       <AddFolderDialog ref={folderDialogRef} />
-      <AddCardSetDialog ref={cardSetDialogRef} />
     </>
   );
 }

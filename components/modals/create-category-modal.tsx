@@ -1,15 +1,17 @@
 import { useAuth } from '@/hooks/use-auth-context';
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
-import { Button, Dialog, Portal, TextInput, Text } from 'react-native-paper';
+import { Button, Dialog, Portal, TextInput, Text, Icon } from 'react-native-paper';
 import { randomUUID } from 'expo-crypto';
 import { usePowerSync } from '@powersync/react-native';
 import { withUniwind } from 'uniwind';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export interface AddCategoryDialogRef {
   show: () => void;
 }
 
 const StyledText = withUniwind(Text);
+const StyledIcon = withUniwind(MaterialCommunityIcons);
 
 export const AddCategoryDialog = forwardRef<AddCategoryDialogRef>((_, ref) => {
   const [visible, setVisible] = useState(false);
@@ -66,7 +68,8 @@ export const AddCategoryDialog = forwardRef<AddCategoryDialogRef>((_, ref) => {
         visible={visible}
         onDismiss={handleDismiss}
       >
-        <Dialog.Title>New Category</Dialog.Title>
+        <StyledIcon name="label-outline" size={30} className='self-center text-primary -mb-4' />
+        <Dialog.Title style={{ fontSize: 24, textAlign: "center" }}>New category</Dialog.Title>
         <Dialog.Content>
           <TextInput
             label="Name"
@@ -76,6 +79,7 @@ export const AddCategoryDialog = forwardRef<AddCategoryDialogRef>((_, ref) => {
             onChangeText={setCategoryName}
             mode="outlined"
             disabled={loading}
+            style={{ backgroundColor: 'transparent' }}
           />
           {error && <StyledText className="text-error mt-2">{error}</StyledText>}
         </Dialog.Content>
