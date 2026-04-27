@@ -91,8 +91,17 @@ export default function FolderDetail() {
     } else {
       const card = item as CardType;
       const data = card.data ? JSON.parse(card.data!) : {};
+      const frontObject = data.front && typeof data.front === 'object' ? data.front : null;
+      const frontText =
+        typeof data.front === 'string'
+          ? data.front
+          : typeof data.frontText === 'string'
+            ? data.frontText
+            : frontObject
+              ? Object.values(frontObject).find((value) => typeof value === 'string' && value.trim().length > 0)
+              : null;
       return {
-        title: data.front || 'Card',
+        title: frontText || 'Card',
         description: card.word_type || 'Card',
         icon: 'card',
         iconColor: theme.colors.onSurfaceVariant,
