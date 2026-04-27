@@ -25,6 +25,7 @@ export const AppSchema = new Schema({
     tag: column.text,
     data: column.text,
     created_at: column.text,
+    word: column.text,
   }),
   practice_sessions: new Table({
     user_id: column.text,

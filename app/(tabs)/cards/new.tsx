@@ -1,14 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, Dimensions } from 'react-native';
-import { Button, Divider, TextInput, Appbar, Chip } from 'react-native-paper';
+import { View, ScrollView, Dimensions, Pressable } from 'react-native';
+import { Button, Divider, TextInput, Appbar, Chip, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, Stack } from 'expo-router';
-import { usePowerSync, useQuery } from '@powersync/react-native';
-import { useAuth } from '@/hooks/use-auth-context';
-import { Column, Folder } from '@/lib/powersync/Schema';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { withUniwind } from 'uniwind';
-import { randomUUID } from 'expo-crypto';
+import { useAuth } from '@/hooks/use-auth-context';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { useFolderPicker } from '@/components/modals/folder-picker';
+import { Column, Folder } from '@/lib/powersync/Schema';
+import { randomUUID } from 'expo-crypto';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -23,120 +24,106 @@ const ARTICLE_COLORS: Record<string, string> = {
   Das: '#22c55e',
 };
 
-type ContentSectionProps = {
-  title: string;
-  columns: string[];
-  values: Record<string, string>;
-  onChange: (v: Record<string, string>) => void;
-};
-
-function ContentSection({ title, columns, values, onChange }: ContentSectionProps) {
-  return (
-    <StyledView className="mb-6">
-      <StyledText variant="titleSmall" className="text-on-surface mb-2">{title}</StyledText>
-      {columns.map(col => (
-        <TextInput
-          key={`${title.toLowerCase()}-${col}`}
-          label={col}
-          value={values[col] || ''}
-          onChangeText={text => onChange({ ...values, [col]: text })}
-          mode="outlined"
-          className="mb-3"
-        />
-      ))}
-    </StyledView>
-  );
-}
-
-type ColumnPickerProps = {
-  title: string;
-  selected: string[];
-  side: 'front' | 'back';
-  allColumnNames: string[];
-  onToggle: (columnName: string, side: 'front' | 'back') => void;
-};
-
-function ColumnPicker({ title, selected, side, allColumnNames, onToggle }: ColumnPickerProps) {
-  return (
-    <StyledView className="mb-4">
-      <StyledText variant="labelLarge" className="text-on-surface mb-2">{title}</StyledText>
-      {allColumnNames.length === 0 ? (
-        <StyledText className="text-on-surface-variant">
-          No categories defined yet. Create categories first to select front/back columns.
-        </StyledText>
-      ) : (
-        <StyledView className="flex-row flex-wrap gap-2">
-          {allColumnNames.map((columnName) => (
-            <Chip
-              key={`${side}-${columnName}`}
-              selected={selected.includes(columnName)}
-              onPress={() => onToggle(columnName, side)}
-              mode="outlined"
-            >
-              {columnName}
-            </Chip>
-          ))}
-        </StyledView>
-      )}
-    </StyledView>
-  );
-}
-
 type PreviewCardProps = {
-  previewTitle: string;
-  frontPreviewRows: string[];
-  backPreviewRows: string[];
+  word: string;
   frontFields: Record<string, string>;
   backFields: Record<string, string>;
+  frontColumns: string[];
+  backColumns: string[];
+  showSide: 'front' | 'back';
+  onFlip: () => void;
 };
 
-function PreviewCard({ previewTitle, frontPreviewRows, backPreviewRows, frontFields, backFields }: PreviewCardProps) {
+function PreviewCard({ word, frontFields, backFields, frontColumns, backColumns, showSide, onFlip }: PreviewCardProps) {
+  const isFront = showSide === 'front';
+  const frontFilledColumns = frontColumns.filter((column) => (frontFields[column] ?? '').trim().length > 0);
+  const backFilledColumns = backColumns.filter((column) => (backFields[column] ?? '').trim().length > 0);
+
+  const flipProgress = useSharedValue(0);
+
+  useEffect(() => {
+    flipProgress.value = withTiming(isFront ? 0 : 1, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFront]);
+
+  const frontAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scaleX: 1 - flipProgress.value },
+      ],
+      opacity: flipProgress.value < 0.5 ? 1 : 0,
+    };
+  });
+
+  const backAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scaleX: flipProgress.value },
+      ],
+      opacity: flipProgress.value >= 0.5 ? 1 : 0,
+    };
+  });
+
   return (
-    <StyledView className="mx-4 mt-2 mb-3 rounded-2xl border border-outline-variant bg-surface-variant p-5 min-h-52">
-      <StyledText variant="titleLarge" className="text-on-surface mb-1">
-        {previewTitle}
-      </StyledText>
-      <StyledText className="text-on-surface-variant mb-3">Live flashcard preview</StyledText>
-      <Divider className="mb-4" />
-      {frontPreviewRows.length === 0 && backPreviewRows.length === 0 ? (
-        <StyledText className="text-on-surface-variant">
-          Start typing values to preview this flashcard.
-        </StyledText>
-      ) : (
-        <StyledView className="gap-3">
-          {frontPreviewRows.map((column) => (
-            <StyledView key={`front-preview-${column}`} className="rounded-xl bg-surface p-3">
-              <StyledText className="text-primary font-medium mb-1">Front</StyledText>
-              <StyledText className="text-on-surface-variant">{column}</StyledText>
-              <StyledText className="text-on-surface mt-1">{frontFields[column] || '-'}</StyledText>
-            </StyledView>
-          ))}
-          {backPreviewRows.map((column) => (
-            <StyledView key={`back-preview-${column}`} className="rounded-xl bg-surface p-3">
-              <StyledText className="text-tertiary font-medium mb-1">Back</StyledText>
-              <StyledText className="text-on-surface-variant">{column}</StyledText>
-              <StyledText className="text-on-surface mt-1">{backFields[column] || '-'}</StyledText>
-            </StyledView>
-          ))}
-        </StyledView>
-      )}
-    </StyledView>
+    <Pressable onPress={onFlip} className="mx-4 mt-2 mb-3">
+      <Animated.View style={frontAnimatedStyle} className="rounded-2xl border border-outline-variant bg-surface-variant p-5 min-h-40">
+        {!word.trim() && frontFilledColumns.length === 0 ? (
+          <StyledText className="text-on-surface-variant">
+            Tap to flip card.
+          </StyledText>
+        ) : (
+          <StyledView className="gap-3">
+            {word.trim() && (
+              <StyledText className="text-2xl font-bold text-on-surface">{word}</StyledText>
+            )}
+            {frontFilledColumns.map((column) => (
+              <StyledView key={`preview-${column}`} className="rounded-xl bg-surface p-3">
+                <StyledText className="text-on-surface-variant text-sm">{column}</StyledText>
+                <StyledText className="text-on-surface text-lg mt-1">{frontFields[column] || '-'}</StyledText>
+              </StyledView>
+            ))}
+          </StyledView>
+        )}
+      </Animated.View>
+      <Animated.View style={[backAnimatedStyle, { position: 'absolute', top: 0, left: 0, right: 0 }]} className="rounded-2xl border border-outline-variant bg-surface-variant p-5 min-h-40">
+        {!word.trim() && backFilledColumns.length === 0 ? (
+          <StyledText className="text-on-surface-variant">
+            Tap to flip card.
+          </StyledText>
+        ) : (
+          <StyledView className="gap-3">
+            {backFilledColumns.map((column) => (
+              <StyledView key={`preview-back-${column}`} className="rounded-xl bg-surface p-3">
+                <StyledText className="text-on-surface-variant text-sm">{column}</StyledText>
+                <StyledText className="text-on-surface text-lg mt-1">{backFields[column] || '-'}</StyledText>
+              </StyledView>
+            ))}
+          </StyledView>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
 export default function NewCard() {
   const params = useLocalSearchParams<{ folderId?: string }>();
+  const router = useRouter();
   const { session } = useAuth();
   const powerSync = usePowerSync();
 
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [word, setWord] = useState('');
   const [frontFields, setFrontFields] = useState<Record<string, string>>({});
   const [backFields, setBackFields] = useState<Record<string, string>>({});
-  const [selectedFrontColumns, setSelectedFrontColumns] = useState<string[]>([]);
-  const [selectedBackColumns, setSelectedBackColumns] = useState<string[]>([]);
+  const [frontColumns, setFrontColumns] = useState<string[]>([]);
+  const [backColumns, setBackColumns] = useState<string[]>([]);
   const [wordType, setWordType] = useState<(typeof WORD_TYPE_OPTIONS)[number]>('Andere');
   const [tag, setTag] = useState<(typeof TAG_OPTIONS)[number]>('New');
   const [loading, setLoading] = useState(false);
+  const [showCardSide, setShowCardSide] = useState<'front' | 'back'>('front');
 
   const { folderId, showPicker, FolderPickerComponent } = useFolderPicker(params.folderId || null);
 
@@ -150,43 +137,14 @@ export default function NewCard() {
   const isTablet = screenWidth >= BREAKPOINT;
 
   const { data: allFolders } = useQuery<Folder>(
-    session?.user.id ? `SELECT * FROM folders WHERE user_id = ? ORDER BY name` : null,
+    `SELECT * FROM folders WHERE user_id = ? ORDER BY name`,
     session?.user.id ? [session.user.id] : []
   );
 
   const { data: columns } = useQuery<Column>(
-    session?.user.id ? `SELECT * FROM columns WHERE user_id = ? ORDER BY label` : null,
+    `SELECT * FROM columns WHERE user_id = ? ORDER BY label`,
     session?.user.id ? [session.user.id] : []
   );
-
-  const { data: userSettings } = useQuery(
-    `SELECT * FROM user_settings WHERE user_id = ?`,
-    session?.user.id ? [session.user.id] : []
-  );
-
-  const settingsFrontColumns = useMemo(() => {
-    if (userSettings && userSettings.length > 0) {
-      try {
-        const cols = JSON.parse(userSettings[0].front_columns || '[]');
-        return Array.isArray(cols) ? cols : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  }, [userSettings]);
-
-  const settingsBackColumns = useMemo(() => {
-    if (userSettings && userSettings.length > 0) {
-      try {
-        const cols = JSON.parse(userSettings[0].back_columns || '[]');
-        return Array.isArray(cols) ? cols : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  }, [userSettings]);
 
   const allColumnNames = useMemo(() => {
     const fromCategoriesOnly = (columns ?? [])
@@ -194,27 +152,6 @@ export default function NewCard() {
       .filter((label): label is string => Boolean(label));
     return Array.from(new Set(fromCategoriesOnly));
   }, [columns]);
-
-  useEffect(() => {
-    if (selectedFrontColumns.length === 0) {
-      setSelectedFrontColumns(settingsFrontColumns.filter((label) => allColumnNames.includes(label)));
-    }
-    if (selectedBackColumns.length === 0) {
-      setSelectedBackColumns(settingsBackColumns.filter((label) => allColumnNames.includes(label)));
-    }
-  }, [allColumnNames, selectedBackColumns.length, selectedFrontColumns.length, settingsBackColumns, settingsFrontColumns]);
-
-  useEffect(() => {
-    if (selectedFrontColumns.length > 0 || selectedBackColumns.length > 0 || allColumnNames.length === 0) return;
-    if (allColumnNames.length === 1) {
-      setSelectedFrontColumns([allColumnNames[0]]);
-      setSelectedBackColumns([allColumnNames[0]]);
-      return;
-    }
-
-    setSelectedFrontColumns([allColumnNames[0]]);
-    setSelectedBackColumns([allColumnNames[1]]);
-  }, [allColumnNames, selectedBackColumns.length, selectedFrontColumns.length]);
 
   const selectedFolder = useMemo(() => {
     if (!folderId || !allFolders) return null;
@@ -237,37 +174,33 @@ export default function NewCard() {
     return parts.join(' / ');
   };
 
-  const toggleColumn = (
-    columnName: string,
-    side: 'front' | 'back'
-  ) => {
-    if (side === 'front') {
-      setSelectedFrontColumns((prev) => {
-        if (prev.includes(columnName)) {
-          return prev.filter((column) => column !== columnName);
-        }
-        return [...prev, columnName];
-      });
-      return;
-    }
-
-    setSelectedBackColumns((prev) => {
+  const toggleFront = (columnName: string) => {
+    setFrontColumns((prev) => {
       if (prev.includes(columnName)) {
-        return prev.filter((column) => column !== columnName);
+        return prev.filter((c) => c !== columnName);
       }
+      setBackColumns((bprev) => bprev.filter((c) => c !== columnName));
       return [...prev, columnName];
     });
   };
 
-  const getMainTerm = () => {
-    const firstFilled = selectedFrontColumns.find((column) => (frontFields[column] ?? '').trim().length > 0);
-    if (!firstFilled) return '';
-    return frontFields[firstFilled] ?? '';
+  const toggleBack = (columnName: string) => {
+    setBackColumns((prev) => {
+      if (prev.includes(columnName)) {
+        return prev.filter((c) => c !== columnName);
+      }
+      setFrontColumns((fprev) => fprev.filter((c) => c !== columnName));
+      return [...prev, columnName];
+    });
+  };
+
+  const flipCard = () => {
+    setShowCardSide((prev) => (prev === 'front' ? 'back' : 'front'));
   };
 
   const nounArticleMeta = useMemo(() => {
     if (wordType !== 'Nomen') return null;
-    const value = getMainTerm().trim();
+    const value = word.trim();
     if (!value) return null;
 
     const article = value.split(/\s+/)[0];
@@ -275,10 +208,10 @@ export default function NewCard() {
     if (!color) return null;
 
     return { article, color };
-  }, [frontFields, selectedFrontColumns, wordType]);
+  }, [word, wordType]);
 
   const handleSave = async () => {
-    if (!folderId || !session?.user.id) return;
+    if (!folderId || !session?.user.id || !word.trim()) return;
 
     setLoading(true);
     try {
@@ -290,29 +223,19 @@ export default function NewCard() {
         Object.entries(backFields).filter(([, value]) => value.trim().length > 0)
       );
 
-      const mainFrontColumn = selectedFrontColumns[0];
-      const previewFront = mainFrontColumn ? filteredFront[mainFrontColumn] : null;
-
-      const dataObj: Record<string, Record<string, string>> = {
+      const dataPayload = {
         front: filteredFront,
         back: filteredBack,
-      };
-      const payload = {
-        ...dataObj,
-        frontColumns: selectedFrontColumns,
-        backColumns: selectedBackColumns,
-        frontText: previewFront ?? null,
+        frontColumns: frontColumns,
+        backColumns: backColumns,
       };
 
       await powerSync.execute(
-        `INSERT INTO cards (id, user_id, folder_id, word_type, tag, data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [newId, session.user.id, folderId, wordType, tag, JSON.stringify(payload), new Date().toISOString()]
+        `INSERT INTO cards (id, user_id, folder_id, word, word_type, tag, data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [newId, session.user.id, folderId, word.trim(), wordType, tag, JSON.stringify(dataPayload), new Date().toISOString()]
       );
 
-      setFrontFields({});
-      setBackFields({});
-      setWordType('Andere');
-      setTag('New');
+      router.back();
     } catch (error) {
       console.error("Create card failed", error);
     } finally {
@@ -320,13 +243,42 @@ export default function NewCard() {
     }
   };
 
-  const hasFrontValue = selectedFrontColumns.some((column) => (frontFields[column] ?? '').trim().length > 0);
-  const hasBackValue = selectedBackColumns.some((column) => (backFields[column] ?? '').trim().length > 0);
-  const canSave = Boolean(folderId) && selectedFrontColumns.length > 0 && selectedBackColumns.length > 0 && hasFrontValue && hasBackValue;
+  const canSave = Boolean(folderId) && word.trim().length > 0;
 
-  const frontPreviewRows = selectedFrontColumns.filter((column) => (frontFields[column] ?? '').trim().length > 0);
-  const backPreviewRows = selectedBackColumns.filter((column) => (backFields[column] ?? '').trim().length > 0);
-  const previewTitle = getMainTerm().trim() || 'Card preview';
+  const renderFieldInput = (column: string, side: 'front' | 'back') => {
+    const fields = side === 'front' ? frontFields : backFields;
+    const setFields = side === 'front' ? setFrontFields : setBackFields;
+    return (
+      <TextInput
+        key={`${side}-${column}`}
+        label={column}
+        value={fields[column] || ''}
+        onChangeText={text => setFields({ ...fields, [column]: text })}
+        mode="outlined"
+      />
+    );
+  };
+
+  const renderColumnChips = (
+    listColumns: string[],
+    onToggle: (col: string) => void
+  ) => (
+    <StyledView className="flex-row flex-wrap gap-2">
+      {allColumnNames.map((col) => {
+        const isSelected = listColumns.includes(col);
+        return (
+          <Chip
+            key={col}
+            selected={isSelected}
+            onPress={() => onToggle(col)}
+            mode={isSelected ? 'flat' : 'outlined'}
+          >
+            {col}
+          </Chip>
+        );
+      })}
+    </StyledView>
+  );
 
   if (isTablet) {
     return (
@@ -337,14 +289,14 @@ export default function NewCard() {
             <Appbar.Content title="New Card" />
             <Appbar.Action icon="check" onPress={handleSave} disabled={!canSave || loading} />
           </Appbar.Header>
-          
+
           <StyledView className="flex-1 flex-row">
             <StyledView className="w-80 border-r border-outline-variant flex-none bg-surface-variant/30">
               <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
                 <StyledView className="mb-4">
                   <StyledText variant="labelLarge" className="text-on-surface mb-2">Card Set</StyledText>
-                  <Button 
-                    mode="outlined" 
+                  <Button
+                    mode="outlined"
                     onPress={showPicker}
                     icon="cards"
                     contentStyle={{ flexDirection: 'row-reverse' }}
@@ -393,49 +345,59 @@ export default function NewCard() {
 
               </ScrollView>
             </StyledView>
-            
+
             <StyledView className="flex-1">
               <PreviewCard
-                previewTitle={previewTitle}
-                frontPreviewRows={frontPreviewRows}
-                backPreviewRows={backPreviewRows}
+                word={word}
                 frontFields={frontFields}
                 backFields={backFields}
+                frontColumns={frontColumns}
+                backColumns={backColumns}
+                showSide={showCardSide}
+                onFlip={flipCard}
               />
               <ScrollView className="flex-1 px-4 pb-4" showsVerticalScrollIndicator={false}>
-                <ColumnPicker
-                  title="Front Face Columns"
-                  selected={selectedFrontColumns}
-                  side="front"
-                  allColumnNames={allColumnNames}
-                  onToggle={toggleColumn}
-                />
-                <ColumnPicker
-                  title="Back Face Columns"
-                  selected={selectedBackColumns}
-                  side="back"
-                  allColumnNames={allColumnNames}
-                  onToggle={toggleColumn}
-                />
+                <StyledView className="mb-6">
+                  <StyledText variant="labelLarge" className="text-on-surface mb-2">Word</StyledText>
+                  <TextInput
+                    label="Word"
+                    value={word}
+                    onChangeText={setWord}
+                    mode="outlined"
+                  />
+                </StyledView>
+
                 <Divider className="my-4" />
-                <ContentSection 
-                  title="Front" 
-                  columns={selectedFrontColumns}
-                  values={frontFields} 
-                  onChange={setFrontFields} 
-                />
-                <ContentSection 
-                  title="Back" 
-                  columns={selectedBackColumns}
-                  values={backFields} 
-                  onChange={setBackFields} 
-                />
+
+                <StyledView className="mb-4">
+                  <StyledText variant="labelLarge" className="text-on-surface mb-2">Front</StyledText>
+                  {renderColumnChips(frontColumns, toggleFront)}
+                </StyledView>
+
+                <StyledView className="mb-4">
+                  <StyledText variant="labelLarge" className="text-on-surface mb-2">Back</StyledText>
+                  {renderColumnChips(backColumns, toggleBack)}
+                </StyledView>
+
+                {frontColumns.length > 0 && (
+                  <StyledView className="mb-6">
+                    <StyledText variant="titleSmall" className="text-on-surface mb-2">Front Values</StyledText>
+                    {frontColumns.map((col) => renderFieldInput(col, 'front'))}
+                  </StyledView>
+                )}
+
+                {backColumns.length > 0 && (
+                  <StyledView className="mb-6">
+                    <StyledText variant="titleSmall" className="text-on-surface mb-2">Back Values</StyledText>
+                    {backColumns.map((col) => renderFieldInput(col, 'back'))}
+                  </StyledView>
+                )}
 
               </ScrollView>
             </StyledView>
           </StyledView>
         </StyledSafeAreaView>
-        
+
         <FolderPickerComponent cardSetOnly />
       </>
     );
@@ -451,17 +413,19 @@ export default function NewCard() {
         </Appbar.Header>
 
         <PreviewCard
-          previewTitle={previewTitle}
-          frontPreviewRows={frontPreviewRows}
-          backPreviewRows={backPreviewRows}
+          word={word}
           frontFields={frontFields}
           backFields={backFields}
+          frontColumns={frontColumns}
+          backColumns={backColumns}
+          showSide={showCardSide}
+          onFlip={flipCard}
         />
         <ScrollView className="flex-1 px-4 pb-4" showsVerticalScrollIndicator={false}>
           <StyledView className="mb-6">
             <StyledText variant="labelLarge" className="text-on-surface mb-2">Card Set</StyledText>
-            <Button 
-              mode="outlined" 
+            <Button
+              mode="outlined"
               onPress={showPicker}
               icon="cards"
               contentStyle={{ flexDirection: 'row-reverse' }}
@@ -509,37 +473,45 @@ export default function NewCard() {
 
           <Divider className="my-4" />
 
-          <ColumnPicker
-            title="Front Face Columns"
-            selected={selectedFrontColumns}
-            side="front"
-            allColumnNames={allColumnNames}
-            onToggle={toggleColumn}
-          />
-          <ColumnPicker
-            title="Back Face Columns"
-            selected={selectedBackColumns}
-            side="back"
-            allColumnNames={allColumnNames}
-            onToggle={toggleColumn}
-          />
+          <StyledView className="mb-6">
+            <StyledText variant="labelLarge" className="text-on-surface mb-2">Word</StyledText>
+            <TextInput
+              label="Word"
+              value={word}
+              onChangeText={setWord}
+              mode="outlined"
+            />
+          </StyledView>
 
-          <ContentSection 
-            title="Front" 
-            columns={selectedFrontColumns}
-            values={frontFields} 
-            onChange={setFrontFields} 
-          />
-          <ContentSection 
-            title="Back" 
-            columns={selectedBackColumns}
-            values={backFields} 
-            onChange={setBackFields} 
-          />
+          <Divider className="my-4" />
+
+          <StyledView className="mb-4">
+            <StyledText variant="labelLarge" className="text-on-surface mb-2">Front</StyledText>
+            {renderColumnChips(frontColumns, toggleFront)}
+          </StyledView>
+
+          <StyledView className="mb-4">
+            <StyledText variant="labelLarge" className="text-on-surface mb-2">Back</StyledText>
+            {renderColumnChips(backColumns, toggleBack)}
+          </StyledView>
+
+          {frontColumns.length > 0 && (
+            <StyledView className="mb-6">
+              <StyledText variant="titleSmall" className="text-on-surface mb-2">Front Values</StyledText>
+              {frontColumns.map((col) => renderFieldInput(col, 'front'))}
+            </StyledView>
+          )}
+
+          {backColumns.length > 0 && (
+            <StyledView className="mb-6">
+              <StyledText variant="titleSmall" className="text-on-surface mb-2">Back Values</StyledText>
+              {backColumns.map((col) => renderFieldInput(col, 'back'))}
+            </StyledView>
+          )}
 
         </ScrollView>
       </StyledSafeAreaView>
-      
+
       <FolderPickerComponent cardSetOnly />
     </>
   );
