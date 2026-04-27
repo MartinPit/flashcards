@@ -8,16 +8,16 @@ import { withUniwind } from 'uniwind';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Folder } from '@/lib/powersync/Schema';
 
-export interface AddFolderDialogRef {
+export interface AddCardSetDialogRef {
   show: (currentFolderId?: string, parentFolderId?: string) => void;
 }
 
 const StyledText = withUniwind(Text);
 const StyledIcon = withUniwind(MaterialCommunityIcons);
 
-export const AddFolderDialog = forwardRef<AddFolderDialogRef>((_, ref) => {
+export const AddCardSetDialog = forwardRef<AddCardSetDialogRef>((_, ref) => {
   const [visible, setVisible] = useState(false);
-  const [folderName, setFolderName] = useState('');
+  const [cardSetName, setCardSetName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parentFolderId, setParentFolderId] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export const AddFolderDialog = forwardRef<AddFolderDialogRef>((_, ref) => {
   const handleDismiss = () => {
     if (loading) return;
     setVisible(false);
-    setFolderName('');
+    setCardSetName('');
     setError(null);
     setParentFolderId(null);
   };
@@ -58,17 +58,17 @@ export const AddFolderDialog = forwardRef<AddFolderDialogRef>((_, ref) => {
 
       const result = await powerSync.execute(
         'SELECT id FROM folders WHERE user_id = ? AND name = ? AND (parent_id = ? OR (parent_id IS NULL AND ? IS NULL)) LIMIT 1',
-        [userId, folderName.trim(), parentFolderId, parentFolderId]
+        [userId, cardSetName.trim(), parentFolderId, parentFolderId]
       )
 
       if (result.rows && result.rows.length > 0) {
-        setError('A folder with this name already exists in this location.');
+        setError('A card set with this name already exists in this location.');
         return;
       }
 
       await powerSync.execute(
         'INSERT INTO folders (id, user_id, name, parent_id, created_at, is_card_set) VALUES (?, ?, ?, ?, ?, ?)',
-        [newId, userId, folderName.trim(), parentFolderId, new Date().toISOString(), 0]
+        [newId, userId, cardSetName.trim(), parentFolderId, new Date().toISOString(), 1]
       );
 
       handleDismiss();
@@ -85,15 +85,15 @@ export const AddFolderDialog = forwardRef<AddFolderDialogRef>((_, ref) => {
         visible={visible}
         onDismiss={handleDismiss}
       >
-        <StyledIcon name="folder-text-outline" size={30} className='self-center text-primary -mb-4' />
-        <Dialog.Title style={{ fontSize: 24, textAlign: "center" }}>New folder</Dialog.Title>
+        <StyledIcon name="cards-outline" size={30} className='self-center text-primary -mb-4' />
+        <Dialog.Title style={{ fontSize: 24, textAlign: "center" }}>New card set</Dialog.Title>
         <Dialog.Content>
           <TextInput
             label="Name"
-            value={folderName}
-            placeholder="Enter folder name"
+            value={cardSetName}
+            placeholder="Enter card set name"
             error={!!error}
-            onChangeText={setFolderName}
+            onChangeText={setCardSetName}
             mode="outlined"
             disabled={loading}
             style={{ backgroundColor: 'transparent' }}
@@ -116,7 +116,7 @@ export const AddFolderDialog = forwardRef<AddFolderDialogRef>((_, ref) => {
           <Button
             onPress={handleSave}
             loading={loading}
-            disabled={!folderName.trim() || loading}
+            disabled={!cardSetName.trim() || loading}
           >
             Create
           </Button>
@@ -153,4 +153,4 @@ export const AddFolderDialog = forwardRef<AddFolderDialogRef>((_, ref) => {
   );
 });
 
-AddFolderDialog.displayName = 'AddFolderDialog';
+AddCardSetDialog.displayName = 'AddCardSetDialog';

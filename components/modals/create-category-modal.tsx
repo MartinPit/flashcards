@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/use-auth-context';
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
-import { Button, Dialog, Portal, TextInput, Text, Icon } from 'react-native-paper';
+import { Button, Dialog, Portal, TextInput, Text } from 'react-native-paper';
 import { randomUUID } from 'expo-crypto';
 import { usePowerSync } from '@powersync/react-native';
 import { withUniwind } from 'uniwind';

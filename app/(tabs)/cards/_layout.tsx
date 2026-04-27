@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import CreateActionsButton from "@/components/ui/create-actions-button";
+import { CreateActionsButton } from "@/components/ui/create-actions-button";
 
 export default function Layout() {
   return (

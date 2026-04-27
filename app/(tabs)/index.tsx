@@ -1,8 +1,11 @@
-import CreateActionsButton from '@/components/ui/create-actions-button';
+import { CreateActionsButton } from '@/components/ui/create-actions-button';
 import { useSystem } from '@/lib/powersync/system';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { Button } from 'react-native-paper';
-import { Uniwind } from "uniwind";
+import { Uniwind , withUniwind } from "uniwind";
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
 
 export default function Tab() {
   const { powerSync } = useSystem();
@@ -22,8 +25,8 @@ export default function Tab() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text>Tab [Home]</Text>
+    <StyledView className="flex-1 justify-center items-center">
+      <StyledText className="text-on-surface">Tab [Home]</StyledText>
       <Button onPress={() => toggleTheme()} mode='elevated'>
         <Text>Click me</Text>
       </Button>
@@ -31,16 +34,7 @@ export default function Tab() {
         <Text>Powercyn</Text>
       </Button>
       <CreateActionsButton />
-
-    </View>
+    </StyledView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 

@@ -1,101 +1,28 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Appbar, List, Text } from 'react-native-paper';
-import Swipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Reanimated, { useAnimatedStyle, LinearTransition, SharedValue } from 'react-native-reanimated';
-import { withUniwind } from 'uniwind';
+import { ActivityIndicator, Appbar, List, Text, useTheme } from 'react-native-paper';
 import { useQuery, usePowerSync } from '@powersync/react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth-context';
 import { Folder } from '@/lib/powersync/Schema';
-import { cn } from '@/lib/utils';
-import { ConfirmDialog, ConfirmDialogRef } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { CreateActionsButton } from '@/components/ui/create-actions-button';
+import { SwipeableListItem } from '@/components/ui/swipeable-list-item';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
+import { withUniwind } from 'uniwind';
 
 const StyledView = withUniwind(View);
-const StyledItem = withUniwind(List.Item);
-const StyledAnimatedView = withUniwind(Reanimated.View);
-const StyledSwipeable = withUniwind(Swipeable);
-
-function SwipeAction(drag: SharedValue<number>, isRight: boolean) {
-  const styleAnimation = useAnimatedStyle(() => ({
-    transform: [{ translateX: drag.value + (isRight ? 80 : -80) }],
-  }));
-
-  return (
-    <StyledAnimatedView style={styleAnimation}>
-      <View style={{ width: 80 }} />
-    </StyledAnimatedView>
-  );
-}
-
-interface FolderItemProps {
-  item: Folder;
-  index: number;
-  foldersLength: number;
-  onDelete: (id: string, name: string) => void;
-  onPress: (folder: Folder) => void;
-}
-
-const FolderListItem = React.memo(function FolderListItem({
-  item,
-  index,
-  foldersLength,
-  onDelete,
-  onPress
-}: FolderItemProps) {
-  const isCardSet = item.is_card_set === 1;
-  const isFirst = index === 0;
-  const isLast = index === foldersLength - 1;
-  const swipeableRef = useRef<SwipeableMethods>(null);
-
-  const handleSwipeOpen = () => {
-    swipeableRef.current?.close();
-    onDelete(item.id, item.name!);
-  };
-
-  return (
-    <StyledAnimatedView layout={LinearTransition.duration(300)}>
-      <StyledSwipeable
-        ref={swipeableRef}
-        friction={2}
-        rightThreshold={40}
-        leftThreshold={40}
-        renderRightActions={(_, drag) => SwipeAction(drag, true)}
-        renderLeftActions={(_, drag) => SwipeAction(drag, false)}
-        onSwipeableWillOpen={handleSwipeOpen}
-        childrenContainerClassName={cn(
-          "bg-surface-variant rounded-sm",
-          isFirst && "rounded-t-xl",
-          isLast && "rounded-b-xl"
-        )}
-      >
-        <StyledItem
-          title={item.name}
-          titleClassName="text-on-surface-variant"
-          description={isCardSet ? 'Card Set' : 'Folder'}
-          onPress={() => onPress(item)}
-          left={props => (
-            <List.Icon
-              {...props}
-              icon={isCardSet ? 'cards' : 'folder'}
-              color={isCardSet ? '#6750A4' : '#79747E'}
-            />
-          )}
-          right={props => <List.Icon {...props} icon="chevron-right" />}
-        />
-      </StyledSwipeable>
-    </StyledAnimatedView>
-  );
-});
+const StyledSafeAreaView = withUniwind(SafeAreaView);
 
 export default function CardsIndex() {
   const router = useRouter();
   const params = useLocalSearchParams<{ folderId?: string }>();
   const { session } = useAuth();
   const powerSync = usePowerSync();
+  const theme = useTheme();
   const currentFolderId = params.folderId || null;
-  const confirmDialogRef = useRef<ConfirmDialogRef>(null);
+  const { confirmDialogRef, showDeleteConfirm } = useConfirmDialog();
 
   const { data: folders, isLoading } = useQuery<Folder>(
     currentFolderId === null
@@ -114,18 +41,20 @@ export default function CardsIndex() {
       .catch(e => console.error("Delete failed", e));
   }, [powerSync]);
 
-  const showDeleteDialog = useCallback((id: string, name: string) => {
-    confirmDialogRef.current?.show({
+  const showDeleteFolderDialog = useCallback((id: string, name: string) => {
+    showDeleteConfirm({
       title: 'Delete Folder',
-      message: `Are you sure you want to delete "${name}"? This will not delete any cards inside.`,
-      destructive: true,
-      onConfirm: () => deleteFolder(id),
+      message: `Are you sure you want to delete "${name}"? This will delete everything inside.`,
+      onDelete: () => deleteFolder(id),
     });
-  }, [deleteFolder]);
+  }, [showDeleteConfirm, deleteFolder]);
 
   const navigateToFolder = useCallback((folder: Folder) => {
     router.push(`/(tabs)/cards/${folder.id}`);
   }, [router]);
+
+  const getIcon = (item: Folder) => item.is_card_set === 1 ? 'cards' : 'folder';
+  const getDescription = (item: Folder) => item.is_card_set === 1 ? 'Card Set' : 'Folder';
 
   return (
     <>
@@ -135,7 +64,7 @@ export default function CardsIndex() {
           headerBackVisible: !!currentFolderId,
         }}
       />
-      <SafeAreaView className="flex-1 bg-surface" edges={['left', 'right']}>
+      <StyledSafeAreaView className="flex-1 bg-surface" edges={['left', 'right']}>
         <Appbar.Header elevated={false}>
           {currentFolderId && (
             <Appbar.BackAction onPress={() => router.back()} />
@@ -151,7 +80,7 @@ export default function CardsIndex() {
           </StyledView>
         ) : folders && folders.length === 0 ? (
           <StyledView className="flex-1 justify-center items-center px-8">
-            <List.Icon icon="folder-open-outline" color="#79747E" style={{ width: 64, height: 64 }} />
+            <List.Icon icon="folder-open-outline" color={theme.colors.outline} style={{ width: 64, height: 64 }} />
             <Text variant="bodyLarge" className="text-on-surface-variant text-center mt-4">
               No folders yet
             </Text>
@@ -165,18 +94,23 @@ export default function CardsIndex() {
             contentContainerStyle={{ padding: 16, gap: 2 }}
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
-              <FolderListItem
-                item={item}
+              <SwipeableListItem
+                title={item.name!}
+                description={getDescription(item)}
+                icon={getIcon(item)}
+                iconColor={item.is_card_set === 1 ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                showChevron
                 index={index}
-                foldersLength={folders?.length ?? 0}
-                onDelete={showDeleteDialog}
-                onPress={navigateToFolder}
+                itemsLength={folders?.length ?? 0}
+                onPress={() => navigateToFolder(item)}
+                onSwipeOpen={() => showDeleteFolderDialog(item.id, item.name!)}
               />
             )}
           />
         )}
-      </SafeAreaView>
+      </StyledSafeAreaView>
       <ConfirmDialog ref={confirmDialogRef} />
+      <CreateActionsButton currentFolderId={currentFolderId ?? undefined} />
     </>
   );
 }

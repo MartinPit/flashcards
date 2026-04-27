@@ -1,28 +1,58 @@
 # Flashcards AI Agent Guidelines
 
-## Architecture & Data Flow
-- **Offline-First Data Layer**: This app operates offline-first using **PowerSync** and **Supabase**. 
-  - Data mutations MUST be performed locally against the PowerSync SQLite database (via `system.powerSync.execute()`). 
-  - PowerSync automatically syncs these changes to Supabase via the `SupabaseConnector` (`lib/powersync/SupabaseConnector.ts`). **Do not mutate data directly using the Supabase JS client** except for authentication or edge-case RPCs.
-  - The local database schema is defined in `lib/powersync/Schema.ts`. Update this file when adding new tables.
-- **Dynamic SQL Adapters**: The app dynamically switches between `@powersync/adapter-sql-js` for Expo Go compatibility and `@powersync/op-sqlite` for performance in native builds (`lib/powersync/system.ts`). Be mindful of adapter constraints when interacting with SQLite.
+## Data Layer (PowerSync + Supabase)
 
-## Routing & Auth Controls
-- **File-Based Routing via Expo Router**: The app lives in the `app/` directory.
-- **Auth Guards**: Authentication routing state is managed at the root (`app/_layout.tsx`) using the custom `Stack.Protected` component. 
-  - When creating a new route flow, assess whether it belongs inside the authenticated guard (`guard={!!session}`) or unauthenticated guard (`guard={!session}`). 
-  - The `@/hooks/use-auth-context.tsx` orchestrates connection syncing alongside user session.
+- **Write to local SQLite only**: Use `system.powerSync.execute()` for all data mutations. Do NOT use the Supabase JS client directly (except auth).
+- **Schema**: Defined in `lib/powersync/Schema.ts` — update here when adding tables.
+- **Adapter switching** (`lib/powersync/system.ts`):
+  - Expo Go → `@powersync/adapter-sql-js` (SQL.js)
+  - Native builds → `@powersync/op-sqlite`
+- **Sync**: `SupabaseConnector` in `lib/powersync/SupabaseConnector.ts` handles upstream sync automatically.
 
-## UI, Styling & React
-- **Tailwind CSS v4 Integration**: Styling relies heavily on Tailwind CSS v4, initialized through `global.css` and applied via standard classes with `uniwind` and `tailwind-merge`. Avoid `StyleSheet.create` unless addressing a highly specific edge case.
-- **React Compiler**: The project has the React Compiler enabled in `app.json`. Focus on building idiomatic React 19 components without prematurely applying `useMemo` or `useCallback`.
-- **Theme Support**: Handled via `ThemeSyncProvider`. Ensure your UI uses standard utility classes that respond well to native appearance changes.
+## Routing & Auth
 
-## Developer Workflows & Commands
-- **Testing Constraints**: Since the app relies heavily on native SQLite in higher environments, changes affecting data shapes must be verified on an actual simulator via a development build.
-- **Key CLI Commands**:
-  - `npm run start` - Standard Expo start.
-  - `npm run development-builds` - Invokes EAS CLI to trigger custom development build workflows (`create-development-builds.yml`).
-  - `npm run draft` / `npm run deploy` - Triggers EAS previews and production releases.
-- **Error Tracking**: Global errors track to Sentry (`@sentry/react-native` setup in `app/_layout.tsx`). Use `ErrorBoundary` (`components/error-boundary.tsx`) around new standalone workflows.
+- File-based routing via `app/` directory (Expo Router).
+- Auth guard at root: `Stack.Protected guard={!!session}` (authenticated) vs `guard={!session}` (unauthenticated).
+- `hooks/use-auth-context.tsx` — manages session + sync enable/disable state.
 
+## UI & Styling
+
+- **Tailwind CSS v4 via `uniwind`**: Components need `withUniwind()` wrapper to use `className`.
+- **Components requiring `withUniwind`**: View, Text, SafeAreaView, FlatList, List.Item, etc.
+- Path alias: `@/*` → `./` (root).
+- Theme via `ThemeSyncProvider` — use standard utility classes.
+
+## UI Components
+
+- **SwipeableListItem** (`components/ui/swipeable-list-item.tsx`): Reusable swipeable list item with delete action.
+- **ConfirmDialog** (`components/ui/confirm-dialog.tsx`): Modal for delete confirmations.
+- **useConfirmDialog** (`components/ui/use-confirm-dialog.ts`): Hook providing `confirmDialogRef`, `showConfirm`, and `showDeleteConfirm`.
+
+## Imports
+
+- Named exports preferred: `import { Component } from '...'` (except react-native-safe-area-context which requires `import { SafeAreaView }` named import).
+
+## Developer Commands
+
+```bash
+npm run start          # Expo dev server
+npm run lint           # ESLint + TypeScript checking (expo lint)
+npm run development-builds   # EAS workflow: create development build
+npm run draft          # EAS workflow: publish preview update
+npm run deploy         # EAS workflow: production deployment
+```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/powersync/Schema.ts` | Local SQLite schema |
+| `lib/powersync/system.ts` | PowerSync init + adapter selection |
+| `app/_layout.tsx` | Root layout, auth guards, Sentry init |
+| `global.css` | Theme variables, Tailwind v4 setup |
+
+## Gotchas
+
+- **No unit tests**: This repo has no test runner. SQLite data-shape changes require verification on a real device/simulator via a development build.
+- **React Compiler enabled**: `app.json` has `reactCompiler: true` — avoid manual `useMemo`/`useCallback` unless needed.
+- **Sentry wraps root layout**: `Sentry.wrap(function RootLayout() {...})` in `app/_layout.tsx:58`.
